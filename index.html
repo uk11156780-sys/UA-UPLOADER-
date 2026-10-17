@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UA Uploader</title>
+<style>
+:root{--bg:#0b0813;--card:#15101f;--tx:#f1ecfa;--mut:#a59cc0;--bd:#2a2140;--ac:#00a6c8}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,sans-serif}
+main{max-width:520px;margin:auto;padding:16px}
+h1{text-align:center;color:var(--ac);margin:14px 0 2px}.sub{text-align:center;color:var(--mut);margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin:10px 0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.price{font-size:1.4rem;font-weight:800;color:var(--ac)}
+button{background:transparent;color:var(--ac);border:1.5px solid var(--ac);border-radius:9px;padding:10px 16px;font-weight:700;font-size:1rem;cursor:pointer}
+button:hover{background:var(--ac);color:#fff}button.g{color:var(--mut);border-color:var(--bd)}
+input{width:100%;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:11px;margin:5px 0;font:inherit}
+.num{text-align:center;font-size:1.6rem;font-weight:800;letter-spacing:1px;background:var(--bg);border:1px dashed var(--ac);border-radius:10px;padding:12px;margin:10px 0}
+.tiny{font-size:.82rem;color:var(--mut)}ul{padding-left:20px;margin:8px 0}
+</style></head><body><main>
+<div style="text-align:right"><button class="g" id="devbtn" style="padding:6px 12px;font-size:.9rem">⚙ Developer</button></div>
+<h1>UA Uploader</h1><div class="sub">Paid version</div>
+<div class="card" id="dev" style="display:none"><div class="row"><b>Developer – Orders</b><span><button class="g" id="dref" style="padding:6px 12px">Refresh</button> <button class="g" id="dout" style="padding:6px 12px">Close</button></span></div>
+<div id="dlist" style="margin-top:10px"></div></div>
+<div class="card"><b>Free upload – up to 2 GB</b><div class="tiny">Choose a file, upload it and get a link to share.</div>
+<input id="uf" type="file"><button id="up" style="width:100%;margin-top:6px">Upload free</button>
+<div style="height:8px;background:var(--bd);border-radius:6px;margin-top:10px;overflow:hidden"><div id="bar" style="height:100%;width:0;background:var(--ac)"></div></div>
+<div class="tiny" id="um" style="margin-top:8px;word-break:break-all"></div></div>
+<div class="card"><div class="row"><div><b>Paid version – 35 GB</b><div class="tiny">Get 35 GB with the paid version</div></div>
+<div><span class="price" id="price"></span></div></div>
+<ul class="tiny"><li>35 GB space</li><li>Fast support on request</li></ul>
+<button id="buy" style="width:100%">Buy paid version of 35 GB</button></div>
+
+<div class="card" id="pay" style="display:none">
+<div style="text-align:center"><img src="jazzcash.png" alt="JazzCash" style="height:52px" onerror="this.outerHTML='<span style=\'background:#e60000;color:#fff;font-weight:800;padding:8px 18px;border-radius:8px;font-size:1.1rem\'>JazzCash</span>'"></div>
+<p style="text-align:center">Send <b id="amt"></b> to this JazzCash number:</p>
+<div class="num" id="jc"></div>
+<button class="g" id="cp" style="width:100%">Copy number</button>
+<hr style="border:0;border-top:1px solid var(--bd);margin:16px 0">
+<b>After sending the money:</b>
+<input id="mynum" type="tel" inputmode="numeric" placeholder="Your number (JazzCash number you paid from)">
+<input id="tid" placeholder="Transaction ID (optional)">
+<button id="done" style="width:100%;margin-top:6px">Done</button>
+<div class="tiny" id="msg" style="margin-top:8px"></div></div>
+<p class="tiny" style="text-align:center">After you tap Done, a message with your number opens in WhatsApp. The owner checks the payment and replies to you.</p>
+</main>
+<script>
+// ====== EDIT THESE ======
+const PRICE=800, JC='03106921077', WA='923106921077', IG='brzxxt_edits';
+// ========================
+const $=s=>document.querySelector(s);
+$('#price').textContent=PRICE;$('#amt').textContent=PRICE;$('#jc').textContent=JC;
+$('#buy').onclick=()=>{$('#pay').style.display='block';$('#pay').scrollIntoView({behavior:'smooth'})};
+$('#cp').onclick=async()=>{try{await navigator.clipboard.writeText(JC);$('#cp').textContent='Copied!'}catch(e){$('#cp').textContent='Copy it manually'}};
+$('#done').onclick=()=>{
+  const n=$('#mynum').value.replace(/\D/g,''),t=$('#tid').value.trim();
+  if(n.length<10)return $('#msg').textContent='Please enter your number (at least 10 digits).';
+  const text=`Hi! I paid ${PRICE} for the 35 GB paid version.\nMy number: ${n}${t?'\nTransaction ID: '+t:''}`;
+  try{const L=JSON.parse(localStorage.getItem('orders')||'[]');L.unshift({phone:n,tid:t,amount:PRICE,t:Date.now()});localStorage.setItem('orders',JSON.stringify(L.slice(0,100)))}catch(e){}
+  try{navigator.clipboard.writeText(text)}catch(e){}
+  $('#msg').innerHTML=`Thank you! Your request is ready. If WhatsApp did not open, <a style="color:var(--ac)" href="https://wa.me/${WA}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">tap here</a>, or send the copied message to <a style="color:var(--ac)" href="https://ig.me/m/${IG}" target="_blank" rel="noopener">Instagram @${IG}</a>.`;
+  location.href=`https://wa.me/${WA}?text=${encodeURIComponent(text)}`;
+};
+
+const MAXF=2*1024*1024*1024,BLOCK=/\.(exe|bat|cmd|scr|msi|vbs|ps1|com|pif|jar)$/i;
+$('#up').onclick=()=>{
+  const f=$('#uf').files[0],m=$('#um');
+  if(!f)return m.textContent='Choose a file first.';
+  if(f.size>MAXF)return m.textContent='File is too large (max 2 GB).';
+  if(BLOCK.test(f.name))return m.textContent='This file type is not allowed.';
+  const fd=new FormData();fd.append('file',f);
+  const x=new XMLHttpRequest();x.open('POST','https://upload.gofile.io/uploadfile');
+  x.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);$('#bar').style.width=p+'%';m.textContent='Uploading... '+p+'%'}};
+  x.onload=()=>{try{const r=JSON.parse(x.responseText);if(r.status!=='ok')throw 0;const link=r.data.downloadPage;
+    m.innerHTML='Uploaded! Your link:<br><a style="color:var(--ac)" href="'+encodeURI(link)+'" target="_blank" rel="noopener">'+encodeURI(link)+'</a><br><button class="g" id="cl" style="margin-top:8px">Copy link</button> <a href="https://wa.me/'+WA+'?text='+encodeURIComponent('I uploaded a file: '+link)+'" target="_blank" rel="noopener"><button class="g">Send to owner</button></a>';
+    $('#cl').onclick=()=>{try{navigator.clipboard.writeText(link);$('#cl').textContent='Copied!'}catch(e){}}}
+    catch(e){m.textContent='Upload failed. Please try again later.'}};
+  x.onerror=()=>m.textContent='Upload failed. Check your internet and try again.';
+  m.textContent='Uploading... 0%';x.send(fd)};
+
+const HASH='189b676c6e602937b65f05923425bc3234656583a0ea420f49f1417a5effca4c';const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function showDev(){let L=[];try{L=JSON.parse(localStorage.getItem('orders')||'[]')}catch(e){}
+  $('#dlist').innerHTML=`<div class="card" style="margin:6px 0"><b>Orders arrive on your WhatsApp</b><div class="tiny">Every time a customer taps Done, the message with their number goes to ${esc(WA)}.</div><div style="margin-top:8px"><a href="https://wa.me/${WA}" target="_blank" rel="noopener"><button class="g">Open WhatsApp</button></a> <a href="https://ig.me/m/${IG}" target="_blank" rel="noopener"><button class="g">Open Instagram</button></a></div></div>
+  <div class="tiny" style="margin:10px 0 4px">Orders made on this phone/browser only:</div>`+(L.length?L.map(o=>`<div class="card" style="margin:6px 0"><b>${esc(o.phone)}</b> <span class="tiny">• ${esc(o.amount)}</span><div class="tiny">TID: ${esc(o.tid||'-')} • ${new Date(o.t).toLocaleString()}</div></div>`).join(''):'<div class="tiny">None.</div>');
+  $('#dev').style.display='block'}
+$('#devbtn').onclick=async()=>{const p=prompt('Enter developer password');if(!p)return;let h='';try{h=await sha(p)}catch(e){}if(h===HASH)showDev();else alert('Wrong password')};
+$('#dref').onclick=showDev;$('#dout').onclick=()=>{$('#dev').style.display='none'};
+</script></body></html>
